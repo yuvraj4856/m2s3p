@@ -1,0 +1,34 @@
+#include <iostream>
+#include <omp.h>
+
+#define SIZE 1000000
+
+int v3[SIZE];
+
+int main() {
+    int total = 0;
+    // initialize v3
+    for(int i = 0; i < SIZE; i++) {
+        v3[i] = i % 10;
+    }
+
+    int private_sum = 0;
+    #pragma omp parallel num_threads(4)
+    {
+        int tid = omp_get_thread_num();
+        int start = tid * SIZE / omp_get_num_threads();
+        int end = (tid + 1) * SIZE / omp_get_num_threads();
+
+        for (int i = start; i < end; i++) {
+            private_sum += v3[i];
+        }
+
+        #pragma omp critical
+        {
+            total += private_sum;
+        }
+    }
+
+    cout << "Total sum: " << total << endl;
+    return 0;
+}
