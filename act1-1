@@ -1,18 +1,13 @@
 #include <iostream>
 #include <stdlib.h>
-#include <pthread.h>
-#include <thread>
-#include <time.h>
-#include <unistd.h>
-#include <string>
 #include <omp.h>
+#include <time.h>
 
 using namespace std;
 
 #define NUM_THREADS 8
 #define MAX 1000000
 
-pthread_mutex_t mutx;
 int data[MAX];
 long global_sum = 0;
 
@@ -34,8 +29,7 @@ void sum(int tid)
 
 int main(int argc, char *argv[])
 {
-    int cores = std::thread::hardware_concurrency();
-    pthread_mutex_init(&mutx, NULL);
+    int cores = omp_get_max_threads();
 
     cout << "The number of cores on this machine = " << cores << endl;
 
