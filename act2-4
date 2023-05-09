@@ -1,34 +1,29 @@
 #include <iostream>
+#include <vector>
 #include <omp.h>
 
-#define SIZE 1000000
+int main()
+{
+    std::vector<int> v3{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
-int v3[SIZE];
-
-int main() {
     int total = 0;
-    // initialize v3
-    for(int i = 0; i < SIZE; i++) {
-        v3[i] = i % 10;
-    }
 
-    int private_sum = 0;
-    #pragma omp parallel num_threads(4)
+    #pragma omp parallel
     {
-        int tid = omp_get_thread_num();
-        int start = tid * SIZE / omp_get_num_threads();
-        int end = (tid + 1) * SIZE / omp_get_num_threads();
+        int local_sum = 0;
 
-        for (int i = start; i < end; i++) {
-            private_sum += v3[i];
+        #pragma omp for
+        for (int i = 0; i < v3.size(); i++) {
+            local_sum += v3[i];
         }
 
         #pragma omp critical
         {
-            total += private_sum;
+            total += local_sum;
         }
     }
 
-    cout << "Total sum: " << total << endl;
+    std::cout << "The total sum of all elements in v3 is: " << total << std::endl;
+
     return 0;
 }
