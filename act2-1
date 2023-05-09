@@ -1,53 +1,44 @@
 #include <iostream>
 #include <stdlib.h>
-#include <pthread.h>
-#include <thread>
 #include <time.h>
-#include <unistd.h>
-#include <string>
 #include <omp.h>
-using namespace std;
 
 #define NUM_THREADS 8
 #define MAX 1000000
-pthread_mutex_t mutx;
 
 int data[MAX];
 long global_sum = 0;
 
-void sum(int tid)
-{
-   long sum = 0;
-   int range = MAX/NUM_THREADS;
-   int start = tid * range ;
-   int end = start + range ;
-
-   #pragma omp parallel for default(none) shared(data, range, start, end) reduction(+:sum)
-   for(int i = start ; i < end ; i++) {
-        sum += data[i];
-   }
-
-   //enforce sequential update
-   #pragma omp critical
-   global_sum += sum;
-   //enforce sequential update
-}
-
 int main(int argc, char *argv[])
 { 
-    int cores = std::thread::hardware_concurrency();
-    pthread_mutex_init(&mutx, NULL);
+    int cores = omp_get_num_procs();
+    std::cout << "The number of cores on this machine = " << cores << std::endl;
 
-    cout<<" the number of cores on this machine = "<<cores<<endl;
-    // srand(time(NULL));
+    // Initialize the data
+    srand(time(NULL));
     for(int i = 0; i < MAX; i++) {
         data[i] = rand() % 20;
     }
 
-    #pragma omp parallel num_threads(NUM_THREADS) default(none) shared(global_sum)
+    #pragma omp parallel num_threads(NUM_THREADS) default(none) shared(data, global_sum)
     {
-        sum(omp_get_thread_num());
+        long tid = omp_get_thread_num();
+        long sum = 0;
+        int range = MAX/NUM_THREADS;
+        int start = tid * range;
+        int end = start + range;
+
+        for(int i = start; i < end; i++) {
+            sum += data[i];
+        }
+
+        #pragma omp critical
+        {
+            global_sum += sum;
+        }
     }
 
-    cout<<"the final sum ="<<global_sum<<endl;
+    std::cout << "The final sum = " << global_sum << std::endl;
+
+    return 0;
 }
