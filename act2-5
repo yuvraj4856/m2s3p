@@ -1,47 +1,25 @@
 #include <iostream>
+#include <vector>
+#include <chrono>
 #include <omp.h>
-using namespace std;
 
-#define SIZE 1000000
+int main()
+{
+    std::vector<int> v(100000000, 1);
+    int sum = 0;
 
-int v3[SIZE];
+    auto start_time = std::chrono::high_resolution_clock::now();
 
-int main() {
-    int total = 0;
-    // initialize v3
-    for(int i = 0; i < SIZE; i++) {
-        v3[i] = i % 10;
+    #pragma omp parallel for schedule(static, 10000) reduction(+:sum)
+    for (int i = 0; i < v.size(); i++) {
+        sum += v[i];
     }
-    // static scheduling with default chunk size
-    #pragma omp parallel for reduction(+:total) schedule(static)
-    for(int i = 0; i < SIZE; i++) {
-        total += v3[i];
-    }
-    cout << "Total sum (static): " << total << endl;
 
-    total = 0;
-    // static scheduling with chunk size 100
-    #pragma omp parallel for reduction(+:total) schedule(static, 100)
-    for(int i = 0; i < SIZE; i++) {
-        total += v3[i];
-    }
-    cout << "Total sum (static, 100): " << total << endl;
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
 
-    total = 0;
-    // dynamic scheduling with default chunk size
-    #pragma omp parallel for reduction(+:total) schedule(dynamic)
-    for(int i = 0; i < SIZE; i++) {
-        total += v3[i];
-    }
-    cout << "Total sum (dynamic): " << total << endl;
-
-    total = 0;
-    // dynamic scheduling with chunk size 100
-    #pragma omp parallel for reduction(+:total) schedule(dynamic, 100)
-    for(int i = 0; i < SIZE; i++) {
-        total += v3[i];
-    }
-    cout << "Total sum (dynamic, 100): " << total << endl;
+    std::cout << "The sum of all elements in the vector is: " << sum << std::endl;
+    std::cout << "Execution time: " << duration.count() << " ms" << std::endl;
 
     return 0;
 }
